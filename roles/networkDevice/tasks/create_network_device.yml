@@ -1,0 +1,77 @@
+---
+- name: Create Radius Device
+  cisco.ise.network_device:
+    ise_hostname: "{{ise_hostname}}"
+    ise_username: "{{ise_username}}"
+    ise_password: "{{ise_password}}"
+    ise_verify: "{{ise_verify}}"
+    state: present
+    NetworkDeviceGroupList:
+      - "Location#All Locations#91 - CORPORATE"
+      - "Device Type#All Device Types#DEV_OPS LAB#CISCO Router"
+    NetworkDeviceIPList:
+      - ipaddress: "{{ ip_address }}"
+        mask: "{{ mask }}"
+    authenticationSettings:
+      dtlsRequired: false
+      enableKeyWrap: true
+      keyEncryptionKey: "1234567890123456"
+      keyInputFormat: "ASCII"
+      messageAuthenticatorCodeKey: "12345678901234567890"
+      radiusSharedSecret: "{{ ISE_RADIUS_KEY }}"
+    coaPort: 0
+    description: ""
+    name: "{{ DEVICENAME }}"
+    profileName: "Cisco"
+  when: resource == "radius"
+
+- name: Create Tacacs Device
+  cisco.ise.network_device:
+    ise_hostname: "{{ise_hostname}}"
+    ise_username: "{{ise_username}}"
+    ise_password: "{{ise_password}}"
+    ise_verify: "{{ise_verify}}"
+    state: present
+    NetworkDeviceGroupList:
+      - "Location#All Locations#91 - CORPORATE"
+      - "Device Type#All Device Types#DEV_OPS LAB#CISCO Router"
+    NetworkDeviceIPList:
+      - ipaddress: "{{ ip_address }}"
+        mask: "{{ mask }}"
+    description: ""
+    name: "{{ DEVICENAME }}"
+    profileName: "Cisco"
+    tacacsSettings:
+      connectModeOptions: "ON_LEGACY"
+      sharedSecret: "{{ ISE_TACAS_KEY }}"
+  when: resource == "tacacs"
+
+
+- name: Create Radius and Tacacs Device
+  cisco.ise.network_device:
+    ise_hostname: "{{ise_hostname}}"
+    ise_username: "{{ise_username}}"
+    ise_password: "{{ise_password}}"
+    ise_verify: "{{ise_verify}}"
+    state: present
+    NetworkDeviceGroupList:
+      - "Location#All Locations#91 - CORPORATE"
+      - "Device Type#All Device Types#DEV_OPS LAB#CISCO Router"
+    NetworkDeviceIPList:
+      - ipaddress: "{{ ip_address }}"
+        mask: "{{ mask }}"
+    authenticationSettings:
+      dtlsRequired: false
+      enableKeyWrap: true
+      keyEncryptionKey: "1234567890123456"
+      keyInputFormat: "ASCII"
+      messageAuthenticatorCodeKey: "12345678901234567890"
+      radiusSharedSecret: "{{ ISE_RADIUS_KEY }}"
+    coaPort: 0
+    description: ""
+    name: "{{ DEVICENAME }}"
+    profileName: "Cisco"
+    tacacsSettings:
+      connectModeOptions: "ON_LEGACY"
+      sharedSecret: "{{ ISE_TACAS_KEY }}"
+  when: resource == "radNtac"
