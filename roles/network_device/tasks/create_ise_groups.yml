@@ -1,0 +1,30 @@
+---
+- name: location block
+  block:
+    - name: Create network device group
+      cisco.ise.network_device_group:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: "{{ ise_verify }}"
+        state: present
+        description: "test"
+        name: "Location#All Locations#{{ group_name }}"
+        othername: "Location"
+      register: location_results
+  when: 'resource == "location"'
+
+- name: device type block
+  block:
+    - name: Create network device group
+      cisco.ise.network_device_group:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: "{{ ise_verify }}"
+        state: present
+        description: "test"
+        name: "Device Type#All Device Types#{{ group_name }}"
+        othername: "Device Type"
+      register: device_type_results
+  when: 'resource == "device_type"'
