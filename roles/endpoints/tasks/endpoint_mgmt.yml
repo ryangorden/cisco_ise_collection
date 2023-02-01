@@ -1,0 +1,26 @@
+---
+- name: Get Endpoint Group by name
+#   vars:
+#     endpoint_group_name: test_endpoint_group
+  cisco.ise.endpoint_group_info:
+    ise_hostname: "{{ ise_hostname }}"
+    ise_username: "{{ ise_username }}"
+    ise_password: "{{ ise_password }}"
+    ise_verify: false
+    name: "{{ endpoint_group_name }}"
+  register: result
+
+- name: Create endpoint
+#   vars:
+#     fixed_address: 11:22:33:44:55:66
+  cisco.ise.endpoint:
+    ise_hostname: "{{ ise_hostname }}"
+    ise_username: "{{ ise_username }}"
+    ise_password: "{{ ise_password }}"
+    ise_verify: false
+    state: "{{ state }}"
+    description: test endpoint
+    groupId: "{{ result.ise_response.id }}"
+    mac: "{{ fixed_address }}"
+    staticGroupAssignment: true
+    staticProfileAssignment: false
