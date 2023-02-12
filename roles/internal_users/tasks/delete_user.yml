@@ -1,0 +1,44 @@
+---
+- name: Get Token
+  uri:
+    url: "{{ ENVIRONMENT[ISE_ENV].ISE_API_URL_USER }}"
+    method: GET
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 200
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-CSRF-TOKEN: "fetch"
+  register: resp_response
+
+- name: delete user
+  uri:
+    url: "{{ ENVIRONMENT[ISE_ENV].ISE_API_URL_USER }}/name/{{ EID }}"
+    method: DELETE
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 204
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-CSRF-TOKEN: "{{ resp_response.x_csrf_token }}"
+      Cookie: "{{ resp_response.cookies_string }}"
+  when: ISE_ENV == "PROD"
+
+- name: delete user
+  uri:
+    url: "{{ ENVIRONMENT[ISE_ENV].ISE_API_URL_USER }}/name/{{ EID }}"
+    method: DELETE
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 204
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      # X-CSRF-TOKEN: "{{ resp_response.x_csrf_token }}"
+      Cookie: "{{ resp_response.cookies_string }}"
+  when: ISE_ENV == "DEV"

@@ -1,0 +1,10 @@
+---
+ENVIRONMENT:
+  DEV:
+    ISE_API_URL_GROUP: "https://fqdn:9060/ers/config/identitygroup"
+    ISE_API_URL_USER: "https://fqdn:9060/ers/config/internaluser"
+    ISE_API_URL: "https://10.224.100.21:9060/ers/config/internaluser"
+  PROD:
+    ISE_API_URL_GROUP: "https://fqdn:9060/ers/config/identitygroup"
+    ISE_API_URL_USER: "https://fqdn:9060/ers/config/internaluser"
+    ISE_API_URL: "https://fqdn:9060/ers/config/internaluser"

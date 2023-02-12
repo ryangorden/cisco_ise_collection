@@ -1,0 +1,111 @@
+- name: "Get token and filter for Username"
+  uri:
+    url: "{{ ISE_API_URL }}?filter=name.EQ.{{ ACCT }}"
+    method: GET
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 200
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    #  X-CSRF-TOKEN: fetch
+  register: getToken
+
+# - name: "Save token"
+#   set_fact:
+#     token: "{{ getToken.x_csrf_token }}"
+
+- name: "Save User ID"
+  set_fact:
+    user_id: "{{ getToken.json.SearchResult.resources[0].id }}"
+
+- name: "Get {{ EID }} Group Memberships"
+  uri:
+    url: "{{ ISE_API_URL }}/{{ user_id }}"
+    method: GET
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 200
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+  #    X-CSRF-TOKEN: fetch
+  register: currentId
+
+
+- name: "Save Current Group ID(s)"
+  set_fact:
+    group_id: "{{ currentId.json.InternalUser.identityGroups }},{{ elevated_group_id }}"
+
+
+- name: "Elevate {{ EID }} "
+  uri:
+    url: "{{ ISE_API_URL }}/{{ user_id }}"
+    method: PUT
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 200
+    body_format: json
+    body:
+      InternalUser:
+        identityGroups: "{{group_id }}"
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      # X-CSRF-TOKEN: "{{ token }}"
+      Cookie: "{{ getToken.cookies_string }}"
+  register: returnBody
+
+- name: "Get Elevated {{ EID }} "
+  uri:
+    url: "{{ ISE_API_URL }}/{{ user_id }}"
+    method: GET
+    validate_certs: no
+    url_username: "{{ ISE_USERNAME }}"
+    url_password: "{{ ISE_PASSWORD }}"
+    status_code: 200
+    body_format: json
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      # X-CSRF-TOKEN: "{{ token }}"
+      Cookie: "{{ getToken.cookies_string }}"
+  register: elevated_id
+
+- name: "Save Current Group ID(s)"
+  set_fact:
+    promoted_group_id: "{{ elevated_id.json.InternalUser.identityGroups }}"
+
+- name: Assert Group value was updated
+  assert:
+    that:
+      - "elevated_group_id in promoted_group_id"
+
+- name: "Set delevate period"
+  set_fact:
+    delevate_time: "{{ DELEVATE_HOURS | getScheduleTime }}"
+
+- name: "SCHEDULE Privilege removal for {{ EID }} account"
+  uri:
+    url: "{{ TOWER_API_URL }}/job_templates/{{ template_id }}/schedules/"
+    method: POST
+    user: "{{ TOWER_USERNAME }}"
+    password: "{{ TOWER_PASSWORD }}"
+    force_basic_auth: yes
+    validate_certs: no
+    status_code: 201
+    body_format: json
+    body:
+      name: "Delevate User: {{ EID }}  AT {{ delevate_time }}"
+      rrule: "DTSTART:{{ delevate_time }} RRULE:FREQ=DAILY;INTERVAL=1;COUNT=1"
+      extra_data:
+        EID: "{{ EID }}" 
+        user_id: "{{ user_id }}"
+        origninal_group_id: "{{ currentId.json.InternalUser.identityGroups }}"
+        hours: "{{ hours }}"
+    headers:
+      Content-Type: application/json
+      Accept: application/json

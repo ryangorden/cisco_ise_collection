@@ -1,26 +1,93 @@
 ---
-- name: Get Endpoint Group by name
-#   vars:
-#     endpoint_group_name: test_endpoint_group
-  cisco.ise.endpoint_group_info:
-    ise_hostname: "{{ ise_hostname }}"
-    ise_username: "{{ ise_username }}"
-    ise_password: "{{ ise_password }}"
-    ise_verify: false
-    name: "{{ endpoint_group_name }}"
-  register: result
+- name: Add endpoint to profile only
+  block:
+    - name: get profiles
+      cisco.ise.profiler_profile_info:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+      register: profiles
 
-- name: Create endpoint
-#   vars:
-#     fixed_address: 11:22:33:44:55:66
-  cisco.ise.endpoint:
-    ise_hostname: "{{ ise_hostname }}"
-    ise_username: "{{ ise_username }}"
-    ise_password: "{{ ise_password }}"
-    ise_verify: false
-    state: "{{ state }}"
-    description: test endpoint
-    groupId: "{{ result.ise_response.id }}"
-    mac: "{{ fixed_address }}"
-    staticGroupAssignment: true
-    staticProfileAssignment: false
+    - name: "Find {{ profile_name }}"
+      loop: "{{ profiles.ise_response }}"
+      when: item.name == profile_name
+      set_fact:
+        profile_id: "{{ item.id }}"
+
+    - name: Create endpoint with static profile only
+      cisco.ise.endpoint:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+        state: "{{ state }}"
+        description: test endpoint
+        mac: "{{ fixed_address }}"
+        staticProfileAssignment: true
+        profileId: "{{ profile_id }}"
+  when: (profile_name is defined) and (profile_name | length > 0) and (endpoint_group_name | length < 0)
+
+- name: Add endpoint to group only
+  block:
+    - name: Get Endpoint Group by name
+      cisco.ise.endpoint_group_info:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+        name: "{{ endpoint_group_name }}"
+      register: result
+
+    - name: Create endpoint
+      cisco.ise.endpoint:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+        state: "{{ state }}"
+        description: test endpoint
+        groupId: "{{ result.ise_response.id }}"
+        mac: "{{ fixed_address }}"
+        staticGroupAssignment: true
+  when: (endpoint_group_name is defined) and (endpoint_group_name | length > 0) and (profile_name | length < 0)
+
+- name: Add endpoint to profile and group
+  block:
+    - name: Get Endpoint Group by name
+      cisco.ise.endpoint_group_info:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+        name: "{{ endpoint_group_name }}"
+      register: result
+
+    - name: get profiles
+      cisco.ise.profiler_profile_info:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+      register: profiles
+
+    - name: "Find {{ profile_name }}"
+      loop: "{{ profiles.ise_response }}"
+      when: item.name == profile_name
+      set_fact:
+        profile_id: "{{ item.id }}"
+
+    - name: Create endpoint
+      cisco.ise.endpoint:
+        ise_hostname: "{{ ise_hostname }}"
+        ise_username: "{{ ise_username }}"
+        ise_password: "{{ ise_password }}"
+        ise_verify: false
+        state: "{{ state }}"
+        description: test endpoint
+        groupId: "{{ result.ise_response.id }}"
+        mac: "{{ fixed_address }}"
+        staticGroupAssignment: true
+        staticProfileAssignment: true
+        profileId: "{{ profile_id }}"
+  when: (endpoint_group_name is defined) and (endpoint_group_name | length > 0) and (profile_name is defined) and (profile_name | length > 0)
